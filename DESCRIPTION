@@ -1,0 +1,44 @@
+Package: icmBenchmarkR
+Title: Automated ICM Training Quality Benchmarking Reports
+Version: 0.0.1
+Authors@R: 
+    person(given   = "Nick",
+           family  = "Plummer", 
+           email   ="nickplummer@nhs.net",
+           role    = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-1239-9253"))
+Description: Tools to import ICM training quality assessments from M365 Forms,
+    clean and summarise data, and generate hospital-level benchmarking
+    reports via R Markdown templates. Designed for regional or national rollout,
+    including support for Shiny interface.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports:
+    dplyr,
+    tidyr,
+    purrr,
+    readr,
+    readxl,
+    ggplot2,
+    magrittr,
+    knitr,
+    lubridate,
+    stringr,
+    tibble,
+    shiny,
+    shinyjs,
+    sortable,
+    utils,
+    forcats,
+    rmarkdown,
+    gridExtra,
+    scales,
+    fs
+Suggests:
+    testthat (>= 3.0.0),
+    shinycssloaders
+VignetteBuilder: knitr
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Config/testthat/edition: 3

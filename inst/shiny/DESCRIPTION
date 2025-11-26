@@ -1,0 +1,16 @@
+Package: icmBenchmarkRApp
+Type: Shiny
+Title: ICM Benchmarking Report Generator
+Version: 0.0.1
+Description: Shiny app wrapper for icmBenchmarkR.
+License: MIT
+Encoding: UTF-8
+
+Imports:
+    shiny,
+    shinyjs,
+    sortable,
+    icmBenchmarkR
+
+Remotes:
+    nickopotamus/icmBenchmarkR

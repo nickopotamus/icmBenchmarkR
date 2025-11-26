@@ -1,0 +1,10 @@
+.DS_Store
+/data
+/hospital_reports
+.Rproj.user
+.Rhistory
+.Rdata
+.httr-oauth
+.quarto
+README.Rmd
+/inst/shiny/local_packages

@@ -1,0 +1,13 @@
+^renv$
+^renv\.lock$
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.Rhistory$
+^\.RData$
+^\.Renviron$
+^data$
+^hospital_reports$
+^LICENSE\.md$
+^README\.Rmd$
+^inst/shiny/local_packages/
+^icmBenchmarkR_.*\.tar\.gz$

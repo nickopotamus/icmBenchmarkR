@@ -1,0 +1,247 @@
+---
+title: "ICM training benchmarking: `r params$hospital_name`"
+output:
+  pdf_document:
+    includes:
+      in_header: header.tex
+date: "`r Sys.Date()`"
+params:
+  hospital_name: "Default Hospital"
+  hospital_data: NULL
+  regional_summary: NULL
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(tidyverse)
+library(scales)
+library(gridExtra)
+library(RColorBrewer)
+#library(forcats)
+#library(lubridate)
+```
+
+```{r extract-data}
+# Extract from parameters passed
+regional_summary <- params$regional_summary
+category_map     <- regional_summary$category_map
+lookup           <- regional_summary$lookup
+hosp_data        <- params$hospital_data
+hospital_name    <- params$hospital_name
+
+# Extract relevant summary tables
+hosp_means          <- regional_summary$hospital_means
+hosp_counts         <- regional_summary$hospital_counts
+question_means_hosp <- regional_summary$question_means_by_hosp
+region_q_means      <- regional_summary$region_question_means
+category_summary    <- regional_summary$category_summary
+
+# Subset for this hospital
+this_hosp_qmeans <- question_means_hosp %>%
+  filter(Hospital == hospital_name)
+
+# Additional calculations required
+hosp_mean <- hosp_means %>% filter(Hospital == hospital_name) %>% pull(mean_score)
+n_responses <- hosp_counts %>% filter(Hospital == hospital_name) %>% pull(n_responses)
+regional_mean <- mean(hosp_means$mean_score)
+``` 
+
+# Overall picture
+
+* **Total responses from `r hospital_name`**: `r n_responses`
+* **Average score for `r hospital_name`**: `r round(hosp_mean, 1)`
+* **Average hospital score regionally**: `r round(regional_mean, 1)`
+
+```{r overall}
+# Set palette for bar chart
+chart_pal <- brewer.pal(nrow(hosp_means), "RdYlGn") %>% rev()
+
+mean_hospital_plot <- hosp_means %>%
+  arrange(desc(mean_score)) %>% # i.e best to worst
+  mutate(
+    Hospital = factor(Hospital, levels = Hospital),
+    fill_col = chart_pal[row_number()],
+    fill_col = if_else(Hospital == hospital_name, fill_col, "darkgrey"),
+    label = if_else(Hospital == hospital_name, as.character(Hospital), "")
+  )
+
+ggplot(mean_hospital_plot, aes(x = Hospital,
+                               y = mean_score,
+                               fill = Hospital)) +
+  geom_col(colour = "black") +
+  # Add regional mean
+  geom_hline(yintercept = regional_mean,
+             linetype = "dashed", colour = "grey30", linewidth = 0.7) +
+  annotate(
+    "text",
+    x = Inf,
+    y = regional_mean + 0.05,
+    label = "Regional mean",
+    hjust = 1.05,
+    vjust = 0,
+    size = 3,
+    colour = "grey20"
+  ) +
+  scale_y_continuous('Mean score',
+                     limits = c(1, 4),
+                     oob = scales::squish) +
+  scale_x_discrete(labels = mean_hospital_plot$label) +
+  scale_fill_manual(values = setNames(mean_hospital_plot$fill_col,
+                                      mean_hospital_plot$Hospital)) +
+  theme_classic() +
+  theme(legend.position = "none",
+        axis.title.x = element_blank())
+```
+
+```{r category-sections, echo = FALSE, results = "asis"}
+
+# Helper to convert CLEAN column name to ORIGINAL long question text
+pretty_label <- function(clean_name) {
+  out <- lookup$original[lookup$cleaned == clean_name]
+  if (length(out) == 0) clean_name else out
+}
+
+# Palette for bar charts
+color_palette <- c("4" = "darkgreen",
+                   "3" = "gold",
+                   "2" = "darkorange",
+                   "1" = "darkred")
+
+# For each category...
+for (cat in names(category_map)) {
+
+  # Page break and print overall values
+  cat("\\newpage\n\n")
+  cat("# ", cat, "\n\n")
+  
+  # Pull category questions and scores
+  cat_questions <- category_map[[cat]]
+  
+  cat_data_hosp <- this_hosp_qmeans %>%
+    filter(question %in% cat_questions) %>%
+    left_join(region_q_means, by = "question", suffix = c("_hosp", "_region"))
+
+  # Calculate means
+  cat_hosp_mean <- mean(cat_data_hosp$mean_value_hosp)
+  cat_region_mean <- mean(cat_data_hosp$mean_value_region)
+
+  cat(paste0(
+    "* Mean score (solid line) for ", hospital_name, ": ", round(cat_hosp_mean, 1), "\n", 
+    "* Regional mean (dashed line): ", round(cat_region_mean, 1), "\n\n"
+  ))
+  
+  # Build a list of ggplots for each question
+  plot_list <- lapply(cat_questions, function(qname) {
+    
+    # Calculate means
+    qm_hosp   <- cat_data_hosp$mean_value_hosp[cat_data_hosp$question == qname]
+    qm_region <- cat_data_hosp$mean_value_region[cat_data_hosp$question == qname]
+
+    # Pull the full text label
+    q_label <- pretty_label(qname)
+
+    # Extract raw response distribution for this hospital
+    df_q <- hosp_data %>% 
+      filter(Hospital == hospital_name) %>% pull(q)
+
+    # Plot scores
+    p <- ggplot(data.frame(value = df_q)) +
+      aes(x = factor(value, levels = 1:4),
+          fill = factor(value)) +
+      geom_bar(colour = "black") +
+      scale_x_discrete(drop = FALSE, limits = c("1","2","3","4")) +
+      scale_y_continuous(breaks = pretty) +
+      scale_fill_manual(values = color_palette) +
+      labs(title = str_wrap(q_label, width = 35), x = "", y = "") +
+      theme_classic() +
+      theme(legend.position = "none",
+            plot.title = element_text(size = 8)) +
+      # Add mean markers
+      geom_vline(xintercept = qm_hosp, linetype = "solid", colour = "black", size = 0.7) +
+      geom_vline(xintercept = qm_region, linetype = "dashed", colour = "grey20", size = 0.7)
+
+  })
+  
+  # Use gridExtra to layout in 3 columns
+  gridExtra::grid.arrange(grobs = plot_list, ncol = 3)
+  
+}
+
+```
+
+\newpage
+
+# Would you recommend this placement?
+
+```{r recommend}
+rec_values <- hosp_data$recommend[hosp_data$Hospital == hospital_name]
+
+if (all(is.na(rec_values))) {
+  cat("*No recommendation data available.*")
+} else {
+
+  rec_tab <- table(rec_values)
+
+  ggplot(data.frame(rec = names(rec_tab), n = as.numeric(rec_tab)),
+         aes(x = "", y = n, fill = rec)) +
+    geom_col(width = 1, colour = "black") +
+    coord_polar(theta = "y") +
+    scale_fill_manual(values = c("1" = "darkgreen",
+                                 "0" = "darkred"),
+                      labels = c("No", "Yes")) +
+    theme_void() +
+    theme(legend.title = element_blank())
+}
+```
+
+\newpage
+
+# Comments from resident doctors
+
+```{r comments}
+# Find original comments column
+comment_col <- names(hosp_data)[stringr::str_detect(names(hosp_data), "(?i)comment")][1]
+stage_col   <- names(hosp_data)[grepl("stage", names(hosp_data), ignore.case = TRUE)][1]
+ltft_col    <- names(hosp_data)[grepl("ltft", names(hosp_data), ignore.case = TRUE)][1]
+
+comments_df <- hosp_data %>% 
+  filter(Hospital == hospital_name) %>% 
+  mutate(Comment = .data[[comment_col]]) %>% 
+  filter(!is.na(Comment) & Comment != "")
+
+  if (nrow(comments_df) == 0) {
+    cat("* No comments available")
+  } else {
+    table_out <- comments_df %>% 
+      select(
+        Stage    = all_of(stage_col),
+        LTFT     = all_of(ltft_col),
+        Comments = all_of(comment_col)
+      ) %>%
+  mutate(
+    Stage = case_when(
+      stringr::str_detect(stringr::str_to_lower(Stage), "advanced") ~ "Stage 3",
+      TRUE ~ Stage
+      )
+    )
+  }
+
+if (nrow(comments_df) == 0) {
+  cat("*No comments submitted.*")
+} else {
+  knitr::kable(
+      table_out,
+      caption = NULL,
+      format = "latex",
+      booktabs = TRUE,
+      longtable = FALSE,
+      align = c("l", "l", "p{10cm}")   # <-- wrap 3rd column
+    ) |>
+      kableExtra::kable_styling(
+        latex_options = c("hold_position"),
+        full_width = FALSE
+      )
+}
+```
+
+
