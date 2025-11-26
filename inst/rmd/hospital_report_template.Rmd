@@ -26,6 +26,7 @@ library(icmBenchmarkR)
 library(scales)
 library(gridExtra)
 library(RColorBrewer)
+library(kableExtra)
 #library(forcats)
 #library(lubridate)
 ```
