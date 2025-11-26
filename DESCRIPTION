@@ -35,7 +35,6 @@ Imports:
     gridExtra,
     scales,
     fs,
-    kableExtra,
     gridExtra,
     RColorBrewer
 Suggests:

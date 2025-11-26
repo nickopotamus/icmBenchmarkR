@@ -26,7 +26,7 @@ library(icmBenchmarkR)
 library(scales)
 library(gridExtra)
 library(RColorBrewer)
-library(kableExtra)
+#library(kableExtra)
 #library(forcats)
 #library(lubridate)
 ```
@@ -246,11 +246,11 @@ if (nrow(comments_df) == 0) {
       booktabs = TRUE,
       longtable = FALSE,
       align = c("l", "l", "p{10cm}")   # <-- wrap 3rd column
-    ) |>
-      kableExtra::kable_styling(
-        latex_options = c("hold_position"),
-        full_width = FALSE
-      )
+    ) # %>% 
+    #   kableExtra::kable_styling(
+    #     latex_options = c("hold_position"),
+    #     full_width = FALSE
+    #   )
 }
 ```
 
