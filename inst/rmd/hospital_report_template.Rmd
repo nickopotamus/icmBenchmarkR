@@ -3,7 +3,7 @@ title: "ICM training benchmarking: `r params$hospital_name`"
 output:
   pdf_document:
     includes:
-      in_header: header.tex
+      in_header: !expr system.file("rmd", "header.tex", package = "icmBenchmarkR")
 date: "`r Sys.Date()`"
 params:
   hospital_name: "Default Hospital"
@@ -142,7 +142,7 @@ for (cat in names(category_map)) {
 
     # Extract raw response distribution for this hospital
     df_q <- hosp_data %>% 
-      filter(Hospital == hospital_name) %>% pull(q)
+      filter(Hospital == hospital_name) %>% pull(qname)
 
     # Plot scores
     p <- ggplot(data.frame(value = df_q)) +

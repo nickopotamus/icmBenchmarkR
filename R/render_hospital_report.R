@@ -16,27 +16,28 @@ render_hospital_report <- function(
                            package = "icmBenchmarkR")
 ) {
 
-  # Ensure directory exists
-  out_dir  <- dirname(output_file)
-  out_file <- basename(output_file)
+  # Path to the package Rmd
+  rmd_path <- template
 
-  if (!dir.exists(out_dir)) {
-    dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-  }
+  # 1. Create a safe temp directory
+  tmp_rmd_dir <- file.path(tempdir(), "icm_rmd")
+  if (!dir.exists(tmp_rmd_dir)) dir.create(tmp_rmd_dir, recursive = TRUE)
 
-  # Parameters to pass to markdown
-  params <- list(
-    hospital_name    = hospital_name,
-    hospital_data    = df_clean,
-    regional_summary = regional_summary
-  )
+  # 2. Copy Rmd into temp directory
+  tmp_rmd <- file.path(tmp_rmd_dir, "hospital_report_template.Rmd")
+  file.copy(rmd_path, tmp_rmd, overwrite = TRUE)
 
-  # Render the document
+  # 3. Render *inside* temp directory
   rmarkdown::render(
-    input       = template,
-    output_file = out_file,
-    output_dir  = out_dir,
-    params      = params,
-    envir       = new.env(parent = globalenv())
+    input = tmp_rmd,
+    output_file = output_file,
+    params = list(
+      hospital_name    = hospital_name,
+      hospital_data    = df_clean,
+      regional_summary = regional_summary
+    ),
+    envir = new.env(parent = globalenv())
   )
+
+  return(invisible(TRUE))
 }

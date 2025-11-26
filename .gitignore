@@ -8,3 +8,5 @@
 .quarto
 README.Rmd
 /inst/shiny/local_packages
+/inst/shiny/rsconnect
+*.dcf
