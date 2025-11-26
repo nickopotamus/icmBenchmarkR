@@ -34,7 +34,10 @@ Imports:
     rmarkdown,
     gridExtra,
     scales,
-    fs
+    fs,
+    kableExtra,
+    gridExtra,
+    RColorBrewer
 Suggests:
     testthat (>= 3.0.0),
     shinycssloaders
